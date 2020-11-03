@@ -75,78 +75,6 @@ namespace fiboheap
             return minimum()->key;
         }
 
-        /*
-         * extract_min
-         * 1. z = H.min
-         * 2. if z != NIL
-         * 3. 	for each child x of z
-         * 4. 		add x to the root list of H
-         * 5. 		x.p = NIL
-         * 6. 	remove z from the root list of H
-         * 7.	if z == z.right
-         * 8. 		H.min = NIL
-         * 9. 	else H.min = z.right
-         *10. 		CONSOLIDATE(H)ValueType
-         *11. 	H.n = H.n - 1
-         *12. return z
-         */
-        Node* extractMin()
-        {
-            Node *z, *x, *next;
-            Node** childList;
-
-            // 1
-            z = m_min;
-            // 2
-            if(z != nullptr)
-            {
-                // 3
-                x = z->child;
-                if(x != nullptr)
-                {
-                    childList = new Node*[z->degree];
-                    next      = x;
-                    for(int i = 0; i < (int)z->degree; ++i)
-                    {
-                        childList[i] = next;
-                        next         = next->right;
-                    }
-                    for(int i = 0; i < (int)z->degree; ++i)
-                    {
-                        x = childList[i];
-                        // 4
-                        m_min->left->right = x;
-                        x->left            = m_min->left;
-                        m_min->left        = x;
-                        x->right           = m_min;
-                        // 5
-                        x->p = nullptr;
-                    }
-                    delete[] childList;
-                }
-                // 6
-                z->left->right = z->right;
-                z->right->left = z->left;
-                // 7
-                if(z == z->right)
-                {
-                    // 8
-                    m_min = nullptr;
-                }
-                else
-                {
-                    // 9
-                    m_min = z->right;
-                    // 10
-                    consolidate();
-                }
-                // 11
-                --m_n;
-            }
-            // 12
-            return z;
-        }
-
         //! Removes the minimum element
         void pop()
         {
@@ -245,105 +173,11 @@ namespace fiboheap
             return h;
         }
 
-        /*
-         * cut(x,y)
-         * 1. remove x from the child list of y, decrementing y.degree
-         * 2. add x to the root list of H
-         * 3. x.p = NIL
-         * 4. x.mark = FALSE
-         */
-        void cut(Node* x, Node* y)
-        {
-            // 1
-            if(x->right == x)
-            {
-                y->child = nullptr;
-            }
-            else
-            {
-                x->right->left = x->left;
-                x->left->right = x->right;
-                if(y->child == x)
-                {
-                    y->child = x->right;
-                }
-            }
-            -- y->degree;
-            // 2
-            m_min->right->left = x;
-            x->right           = m_min->right;
-            m_min->right       = x;
-            x->left            = m_min;
-            // 3
-            x->p = nullptr;
-            // 4
-            x->mark = false;
-        }
-
-        /*
-         * cascading_cut(y)
-         * 1. z = y.p
-         * 2. if z != NIL
-         * 3. 	if y.mark == FALSE
-         * 4. 		y.mark = TRUE
-         * 5. 	else CUT(H,y,z)
-         * 6. 		CASCADING-CUT(H,z)
-         */
-        void cascadingCut(Node* y)
-        {
-            // 1, 2
-            if(Node* z = y->p; z != nullptr)
-            {
-                // 3
-                if(!y->mark)
-                {
-                    // 4
-                    y->mark = true;
-                }
-                else
-                {
-                    // 5
-                    cut(y, z);
-                    // 6
-                    cascadingCut(z);
-                }
-            }
-        }
-
         //! \brief Set to infinity so that it hits the top of the heap, then easily remove
         void removeNode(Node* x)
         {
             decreaseKey(x, std::numeric_limits<KeyType>::min());
             delete extractMin();
-        }
-
-        /*
-         * fib_heap_link(y,x)
-         * 1. remove y from the root list of heap
-         * 2. make y a child of x, incrementing x.degree
-         * 3. y.mark = FALSE
-         */
-        void fibHeapLink(Node* y, Node* x)
-        {
-            // 1
-            y->left->right = y->right;
-            y->right->left = y->left;
-            // 2
-            if(x->child != nullptr)
-            {
-                x->child->left->right = y;
-                y->left               = x->child->left;
-                x->child->left        = y;
-                y->right              = x->child;
-            }
-            else
-            {
-                y->left = y->right = x->child = y;
-            }
-            y->p = x;
-            ++x->degree;
-            // 3
-            y->mark = false;
         }
 
         /*
@@ -392,7 +226,108 @@ namespace fiboheap
             }
         }
 
-       private:
+       protected:
+        /*
+         * extract_min
+         * 1. z = H.min
+         * 2. if z != NIL
+         * 3. 	for each child x of z
+         * 4. 		add x to the root list of H
+         * 5. 		x.p = NIL
+         * 6. 	remove z from the root list of H
+         * 7.	if z == z.right
+         * 8. 		H.min = NIL
+         * 9. 	else H.min = z.right
+         *10. 		CONSOLIDATE(H)ValueType
+         *11. 	H.n = H.n - 1
+         *12. return z
+         */
+        Node* extractMin()
+        {
+            Node *z, *x, *next;
+            Node** childList;
+
+            // 1
+            z = m_min;
+            // 2
+            if(z != nullptr)
+            {
+                // 3
+                x = z->child;
+                if(x != nullptr)
+                {
+                    childList = new Node*[z->degree];
+                    next      = x;
+                    for(int i = 0; i < (int)z->degree; ++i)
+                    {
+                        childList[i] = next;
+                        next         = next->right;
+                    }
+                    for(int i = 0; i < (int)z->degree; ++i)
+                    {
+                        x = childList[i];
+                        // 4
+                        m_min->left->right = x;
+                        x->left            = m_min->left;
+                        m_min->left        = x;
+                        x->right           = m_min;
+                        // 5
+                        x->p = nullptr;
+                    }
+                    delete[] childList;
+                }
+                // 6
+                z->left->right = z->right;
+                z->right->left = z->left;
+                // 7
+                if(z == z->right)
+                {
+                    // 8
+                    m_min = nullptr;
+                }
+                else
+                {
+                    // 9
+                    m_min = z->right;
+                    // 10
+                    consolidate();
+                }
+                // 11
+                --m_n;
+            }
+            // 12
+            return z;
+        }
+
+        /*
+         * fib_heap_link(y,x)
+         * 1. remove y from the root list of heap
+         * 2. make y a child of x, incrementing x.degree
+         * 3. y.mark = FALSE
+         */
+        void fibHeapLink(Node* y, Node* x)
+        {
+            // 1
+            y->left->right = y->right;
+            y->right->left = y->left;
+            // 2
+            if(x->child != nullptr)
+            {
+                x->child->left->right = y;
+                y->left               = x->child->left;
+                x->child->left        = y;
+                y->right              = x->child;
+            }
+            else
+            {
+                y->left = y->right = x->child = y;
+            }
+            y->p = x;
+            ++x->degree;
+            // 3
+            y->mark = false;
+        }
+
         void deleteNodes(Node* x)
         {
             if(x == nullptr)
@@ -528,6 +463,71 @@ namespace fiboheap
                             m_min = A[i];
                         }
                     }
+                }
+            }
+        }
+
+        /*
+ * cut(x,y)
+ * 1. remove x from the child list of y, decrementing y.degree
+ * 2. add x to the root list of H
+ * 3. x.p = NIL
+ * 4. x.mark = FALSE
+ */
+        void cut(Node* x, Node* y)
+        {
+            // 1
+            if(x->right == x)
+            {
+                y->child = nullptr;
+            }
+            else
+            {
+                x->right->left = x->left;
+                x->left->right = x->right;
+                if(y->child == x)
+                {
+                    y->child = x->right;
+                }
+            }
+            -- y->degree;
+            // 2
+            m_min->right->left = x;
+            x->right           = m_min->right;
+            m_min->right       = x;
+            x->left            = m_min;
+            // 3
+            x->p = nullptr;
+            // 4
+            x->mark = false;
+        }
+
+        /*
+         * cascading_cut(y)
+         * 1. z = y.p
+         * 2. if z != NIL
+         * 3. 	if y.mark == FALSE
+         * 4. 		y.mark = TRUE
+         * 5. 	else CUT(H,y,z)
+         * 6. 		CASCADING-CUT(H,z)
+         */
+        void cascadingCut(Node* y)
+        {
+            // 1, 2
+            if(Node* z = y->p; z != nullptr)
+            {
+                // 3
+                if(!y->mark)
+                {
+                    // 4
+                    y->mark = true;
+                }
+                else
+                {
+                    // 5
+                    cut(y, z);
+                    // 6
+                    cascadingCut(z);
                 }
             }
         }
