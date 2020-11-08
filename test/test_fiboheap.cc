@@ -21,8 +21,8 @@
 #include <stdlib.h>
 
 // lib
-#include "fibo_heap.hpp"
-#include "fibo_queue.hpp"
+#include "fiboheap/fibo_heap.hpp"
+#include "fiboheap/fibo_queue.hpp"
 
 struct lowerI
 {
@@ -98,7 +98,7 @@ int main(int argc, char *argv[])
     pqueue.pop();
     pqueue.push(r);
     std::make_heap(const_cast<int *>(&pqueue.top()), const_cast<int *>(&pqueue.top()) + pqueue.size(), lowerI());
-    fh.decreaseKey(fh.topNode(), r);
+    fh.decreasePriority(fh.topNode(), r);
     matchHeaps(fh, pqueue);
 
     fiboheap::FiboQueue<int> fq;
@@ -111,7 +111,7 @@ int main(int argc, char *argv[])
     auto *x = fq.findNode(r);
     assert(x != nullptr);
     int nr = r - rand() / 2;
-    fq.decreaseKey(x, nr);
+    fq.decreasePriority(x, nr);
     pqueue.push(nr);
     matchQueues(fq, pqueue);
 }

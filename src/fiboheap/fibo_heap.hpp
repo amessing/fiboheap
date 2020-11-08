@@ -18,21 +18,21 @@
  */
 #pragma once
 
-// global
+// Global
 #include <cmath>
 #include <functional>
 #include <vector>
 
-// local
-#include "fibo_node.hpp"
+// Local
+#include "fiboheap/fibo_node.hpp"
 
 namespace fiboheap
 {
-    template <typename KeyType, typename ValueType = void, typename Comparator = std::less<KeyType>>
+    template <typename PriorityType, typename KeyType, typename PayloadType = void, typename Comparator = std::less<PriorityType>>
     class FiboHeap
     {
        protected:
-        using Node = FiboNode<KeyType, ValueType>;
+        using Node = FiboNode<PriorityType, KeyType, PayloadType>;
 
        public:
         //! \brief Default Constructor
@@ -53,7 +53,7 @@ namespace fiboheap
             return m_n == 0;
         }
 
-        // ! \returns The number of elements in the heap
+        //! \returns The number of elements in the heap
         size_t size() const noexcept
         {
             return m_n;
@@ -65,14 +65,10 @@ namespace fiboheap
             return m_min;
         }
 
+        //! \returns The node at the top of the tree
         Node* topNode() const
         {
             return minimum();
-        }
-
-        KeyType top() const
-        {
-            return minimum()->key;
         }
 
         //! Removes the minimum element
@@ -88,7 +84,9 @@ namespace fiboheap
             }
         }
 
-        /*
+        /**!
+         * \brief Inserts a node into the Heap
+         *
          * insert(x)
          * 1. x.degree = 0
          * 2. x.p = NIL
@@ -123,7 +121,7 @@ namespace fiboheap
                 m_min->left        = x;
                 x->right           = m_min;
                 // 9
-                if(m_comp(x->key, m_min->key))
+                if(m_comp(x->priority, m_min->priority))
                 {
                     // 10
                     m_min = x;
@@ -133,14 +131,25 @@ namespace fiboheap
             ++ m_n;
         }
 
-        Node* push(KeyType k, std::shared_ptr<ValueType> payload = nullptr)
+        /**!
+         * \brief Add a node to the heap
+         *
+         * \param priority Value representing the significance of the stored payload
+         * \param key Value identifying the stored payload
+         * \param payload Data to put into the Heap
+         *
+         * \returns A pointer to the HeapNode that was recently added to the Heap
+         */
+        Node* push(PriorityType priority, KeyType key, std::shared_ptr<PayloadType> payload = nullptr)
         {
-            Node* x = new Node(std::move(k), payload);
+            Node* x = new Node(std::move(priority), std::move(key), payload);
             insert(x);
             return x;
         }
 
-        /*
+        /**!
+         * \brief
+         *
          * union_fibheap(H1,H2)
          * 1. H = MAKE-FIB-HEAP()
          * 2. H.min = H1.min
@@ -165,7 +174,7 @@ namespace fiboheap
                 h2->min->left        = h->min;
             }
             // 4
-            if(h1->min == nullptr || (h2->min != nullptr && h1->m_comp(h2->min->key, h1->min->key)))
+            if(h1->min == nullptr || (h2->min != nullptr && h1->m_comp(h2->min->priority, h1->min->priority)))
             {
                 h->m_min = h2->m_min;
             }
@@ -176,11 +185,13 @@ namespace fiboheap
         //! \brief Set to infinity so that it hits the top of the heap, then easily remove
         void removeNode(Node* x)
         {
-            decreaseKey(x, std::numeric_limits<KeyType>::min());
+            decreasePriority(x, std::numeric_limits<PriorityType>::min());
             delete extractMin();
         }
 
-        /*
+        /**!
+         * \brief Decrease the priority of a node in the heap
+         *
          * decrease_key(x,k)
          * 1. if k > x.key
          * 2. 	error "new key is greater than current key"
@@ -192,15 +203,15 @@ namespace fiboheap
          * 8. if x.key < H.min.key
          * 9. 	H.min = x
          */
-        void decreaseKey(Node* x, KeyType k)
+        void decreasePriority(Node* x, PriorityType new_priority)
         {
             try
             {
                 // 1
-                if(m_comp(x->key, k))
+                if(m_comp(x->priority, new_priority))
                 {
                     // 2
-                    throw std::out_of_range("new key is greater than current key");
+                    throw std::out_of_range("new priority is greater than current priority");
                 }
             }
             catch(std::out_of_range& e)
@@ -209,9 +220,9 @@ namespace fiboheap
                 return;
             }
             // 3
-            x->key = std::move(k);
+            x->priority = std::move(new_priority);
             // 4, 5
-            if(Node* y = x->p; y != nullptr && m_comp(x->key, y->key))
+            if(Node* y = x->p; y != nullptr && m_comp(x->priority, y->priority))
             {
                 // 6
                 cut(x, y);
@@ -219,7 +230,7 @@ namespace fiboheap
                 cascadingCut(y);
             }
             // 8
-            if(m_comp(x->key, m_min->key))
+            if(m_comp(x->priority, m_min->priority))
             {
                 // 9
                 m_min = x;
@@ -244,11 +255,11 @@ namespace fiboheap
          */
         Node* extractMin()
         {
-            Node *z, *x, *next;
+            Node *x, *next;
             Node** childList;
 
             // 1
-            z = m_min;
+            Node* z = m_min;
             // 2
             if(z != nullptr)
             {
@@ -420,7 +431,7 @@ namespace fiboheap
                     // 8
                     Node* y = A[degree];
                     // 9
-                    if(m_comp(y->key, x->key))
+                    if(m_comp(y->priority, x->priority))
                     {
                         // 10
                         std::swap(x, y);
@@ -457,7 +468,7 @@ namespace fiboheap
                         m_min->left        = A[i];
                         A[i]->right        = m_min;
                         // 22
-                        if(m_comp(A[i]->key, m_min->key))
+                        if(m_comp(A[i]->priority, m_min->priority))
                         {
                             // 23
                             m_min = A[i];
@@ -468,12 +479,12 @@ namespace fiboheap
         }
 
         /*
- * cut(x,y)
- * 1. remove x from the child list of y, decrementing y.degree
- * 2. add x to the root list of H
- * 3. x.p = NIL
- * 4. x.mark = FALSE
- */
+         * cut(x,y)
+         * 1. remove x from the child list of y, decrementing y.degree
+         * 2. add x to the root list of H
+         * 3. x.p = NIL
+         * 4. x.mark = FALSE
+         */
         void cut(Node* x, Node* y)
         {
             // 1

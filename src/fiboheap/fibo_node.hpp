@@ -18,7 +18,7 @@
  */
 #pragma once
 
-// global
+// Global
 #include <memory>
 #include <utility>
 
@@ -27,31 +27,34 @@ namespace fiboheap
     /**!
      * \brief Node for a FiboHeap
      *
-     * \tparam KeyType The type representing the priority for this node
-     * \tparam ValueType A pointer to the payload of this node
+     * \tparam PriorityType The type used to represent the priority of this node
+     * \tparam KeyType The type used for the identifier for the payload in this node
+     * \tparam PayloadType The data to store with this node
      */
-    template <typename KeyType, typename ValueType=void>
+    template <typename PriorityType, typename KeyType, typename PayloadType>
     class FiboNode
     {
        public:
-        FiboNode(KeyType k, std::shared_ptr<ValueType> payload)
-            : key(std::move(k))
+        FiboNode(PriorityType priority, KeyType k, std::shared_ptr<PayloadType> payload= nullptr)
+            : priority(std::move(priority))
+            , key(std::move(k))
+            , payload(payload)
             , mark(false)
             , p(nullptr)
             , left(nullptr)
             , right(nullptr)
             , child(nullptr)
             , degree(-1)
-            , payload(payload)
         {}
 
+        PriorityType priority;
         KeyType key;
+        std::shared_ptr<PayloadType> payload;
         bool mark;
         FiboNode *p;
         FiboNode *left;
         FiboNode *right;
         FiboNode *child;
         int degree;
-        std::shared_ptr<ValueType> payload;
     };
 }  // namespace fiboheap
