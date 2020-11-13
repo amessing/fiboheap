@@ -32,19 +32,19 @@ struct lowerI
     }
 };
 
-void fillHeaps(fiboheap::FiboHeap<int> &fh, std::priority_queue<int, std::vector<int>, lowerI> &pqueue, const int &n)
+void fillHeaps(fiboheap::FiboHeap<int, int> &fh, std::priority_queue<int, std::vector<int>, lowerI> &pqueue, const int &n)
 {
     for(int i = 0; i < n; i++)
     {
         int r = rand();
-        fh.push(r);
+        fh.push(r, r);
         pqueue.push(r);
     }
     assert(fh.size() == n);
     assert(pqueue.size() == n);
 }
 
-void matchHeaps(fiboheap::FiboHeap<int> &fh, std::priority_queue<int, std::vector<int>, lowerI> &pqueue)
+void matchHeaps(fiboheap::FiboHeap<int, int> &fh, std::priority_queue<int, std::vector<int>, lowerI> &pqueue)
 {
     while(!pqueue.empty())
     {
@@ -57,19 +57,19 @@ void matchHeaps(fiboheap::FiboHeap<int> &fh, std::priority_queue<int, std::vecto
     assert(fh.empty());
 }
 
-void fillQueues(fiboheap::FiboQueue<int> &fh, std::priority_queue<int, std::vector<int>, lowerI> &pqueue, const int &n)
+void fillQueues(fiboheap::FiboQueue<int, int> &fh, std::priority_queue<int, std::vector<int>, lowerI> &pqueue, const int &n)
 {
     for(int i = 0; i < n; i++)
     {
         int r = rand();
-        fh.push(r);
+        fh.push(r, r);
         pqueue.push(r);
     }
     assert(fh.size() == n);
     assert(pqueue.size() == n);
 }
 
-void matchQueues(fiboheap::FiboQueue<int> &fh, std::priority_queue<int, std::vector<int>, lowerI> &pqueue)
+void matchQueues(fiboheap::FiboQueue<int, int> &fh, std::priority_queue<int, std::vector<int>, lowerI> &pqueue)
 {
     while(!pqueue.empty())
     {
@@ -84,7 +84,7 @@ void matchQueues(fiboheap::FiboQueue<int> &fh, std::priority_queue<int, std::vec
 
 int main(int argc, char *argv[])
 {
-    fiboheap::FiboHeap<int> fh;
+    fiboheap::FiboHeap<int, int> fh;
     int n = 10;
     std::priority_queue<int, std::vector<int>, lowerI> pqueue;
 
@@ -96,12 +96,12 @@ int main(int argc, char *argv[])
     fillHeaps(fh, pqueue, n);
     int r = pqueue.top() - 1;
     pqueue.pop();
-    pqueue.push(r);
+    pqueue.push(r, r);
     std::make_heap(const_cast<int *>(&pqueue.top()), const_cast<int *>(&pqueue.top()) + pqueue.size(), lowerI());
     fh.decreasePriority(fh.topNode(), r);
     matchHeaps(fh, pqueue);
 
-    fiboheap::FiboQueue<int> fq;
+    fiboheap::FiboQueue<int, int> fq;
     fillQueues(fq, pqueue, n);
     matchQueues(fq, pqueue);
 
